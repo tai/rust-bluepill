@@ -1,0 +1,20 @@
+[package]
+name = "rust-bluepill"
+version = "0.1.0"
+authors = ["Taisuke Yamada <tai@rakugaki.org>"]
+edition = "2018"
+
+[profile.release]
+opt-level = 's'
+lto = true
+debug = true
+
+[dependencies]
+stm32f1 = {version = "0.7.0", features = ["stm32f103", "rt"]}
+
+cortex-m-rt = "0.6.8"
+cortex-m = "0.6.0"
+panic-halt = "0.2.0"
+
+
+
