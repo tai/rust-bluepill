@@ -2,6 +2,8 @@
 #![no_std]
 #![no_main]
 
+extern crate panic_halt;
+
 use cortex_m_rt::entry;
 use stm32f1xx_hal::{
     prelude::*,
@@ -9,8 +11,6 @@ use stm32f1xx_hal::{
     timer::Timer,
 };
 use nb::block;
-
-extern crate panic_halt;
 
 // use `main` as the entry point of this application
 #[entry]
