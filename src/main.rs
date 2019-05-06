@@ -2,32 +2,37 @@
 #![no_std]
 #![no_main]
 
-extern crate stm32f1;
-extern crate panic_halt;
-extern crate cortex_m_rt;
-
 use cortex_m_rt::entry;
-use stm32f1::stm32f103;
+use stm32f1xx_hal::{
+    prelude::*,
+    pac,
+    timer::Timer,
+};
+use nb::block;
+
+extern crate panic_halt;
 
 // use `main` as the entry point of this application
 #[entry]
 fn main() -> ! {
-    // get handles to the hardware
-    let peripherals = stm32f103::Peripherals::take().unwrap();
-    let gpioc = &peripherals.GPIOC;
-    let rcc = &peripherals.RCC;
+    // core peripherals
+    let cp = cortex_m::Peripherals::take().unwrap();
+    // device-specific peripherals
+    let dp = pac::Peripherals::take().unwrap();
 
-    // enable the GPIO clock for IO port C
-    rcc.apb2enr.write(|w| w.iopcen().set_bit());
-    gpioc.crh.write(|w| unsafe{
-        w.mode13().bits(0b11);
-        w.cnf13().bits(0b00)
-    });
+    let mut flash = dp.FLASH.constrain();
+    let mut rcc = dp.RCC.constrain();
 
+    let clocks = rcc.cfgr.freeze(&mut flash.acr);
+
+    let mut gpioc = dp.GPIOC.split(&mut rcc.apb2);
+    let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
+    let mut timer = Timer::syst(cp.SYST, 1.hz(), clocks);
+    
     loop{
-        gpioc.bsrr.write(|w| w.bs13().set_bit());
-        cortex_m::asm::delay(2000000);
-        gpioc.brr.write(|w| w.br13().set_bit());
-        cortex_m::asm::delay(2000000);
+        led.set_high();
+        block!(timer.wait()).unwrap();
+        led.set_low();
+        block!(timer.wait()).unwrap();
     }
 }
